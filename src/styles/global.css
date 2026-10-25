@@ -30,13 +30,67 @@ body {
 
 .app { position: relative; min-height: 100vh; }
 
-canvas.scene {
+.scene {
   position: fixed;
   inset: 0;
   z-index: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scene-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+.fallback-core,
+.fallback-ring,
+.fallback-nodes {
+  grid-area: 1 / 1;
+}
+
+.fallback-core {
+  width: 140px;
+  height: 140px;
+  border-radius: 42%;
+  background: radial-gradient(circle at 30% 30%, #4f7cff, #1b1b4e 68%);
+  box-shadow: 0 0 80px rgba(79, 124, 255, 0.45);
+}
+
+.fallback-ring {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 2px solid rgba(139, 92, 246, 0.85);
+}
+
+.fallback-nodes {
+  position: relative;
+  width: 320px;
+  height: 320px;
+}
+
+.fallback-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px;
+  border-radius: 3px;
+  background: #2dd4bf;
+  transform: rotate(var(--a)) translateX(150px);
 }
 
 main { position: relative; z-index: 1; }

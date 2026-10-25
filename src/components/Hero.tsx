@@ -23,7 +23,7 @@ export default function Hero() {
         onClick={() => {
           const btn = document.querySelector('.scene-assemble') as HTMLButtonElement | null;
           btn?.click();
-        }
+        }}
       >
         Собрать систему
       </button>

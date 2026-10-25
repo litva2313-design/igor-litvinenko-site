@@ -7,7 +7,7 @@ function Core({ progress, sceneState, paused }: any) {
   const group = useRef<THREE.Group>(null!);
   const ring = useRef<THREE.Mesh>(null!);
   const nodes = useRef<THREE.Group>(null!);
-  const pulse = useRef<THREE.Mesh>(null!);
+  const pulse = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>>(null!);
 
   const stateMap: Record<string, number> = {
     hero: 0, chapter1: 0.2, chapter2: 0.45, chapter3: 0.7, situations: 0.8, practice: 0.9, cta: 1,
@@ -148,7 +148,13 @@ export default function Scene({ progress, sceneState, paused, reducedMotion }: a
   }
 
   return (
-    <Canvas className="scene" dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }} camera={{ position: [0, 1, 8], fov: 50 }}>
+    <Canvas
+      className="scene"
+      style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, alpha: true }}
+      camera={{ position: [0, 1, 8], fov: 50 }}
+    >
       <Core progress={progress} sceneState={sceneState} paused={paused} />
     </Canvas>
   );

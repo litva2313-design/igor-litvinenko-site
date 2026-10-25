@@ -44,7 +44,7 @@ export default function CTA() {
           'Готовим следующий шаг и критерии приёмки.',
         ].map((step, i) => (
           <div key={i} className="card" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-            <div className="mono" style={{ color: 'var(--teal)', fontSize: 20, fontWeight: 700 }}>{String(i + 1).padStart(2, '0)}</div>
+            <div className="mono" style={{ color: 'var(--teal)', fontSize: 20, fontWeight: 700 }}>{String(i + 1).padStart(2, '0')}</div>
             <p style={{ fontSize: 16, lineHeight: 1.5 }}>{step}</p>
           </div>
         ))}
@@ -64,7 +64,7 @@ export default function CTA() {
                 key={t.id}
                 className="step-btn"
                 onClick={() => setTopic(t.id)}
-                style={{ borderColor: topic === t.id ? 'var(--electric)' : undefined }
+                style={{ borderColor: topic === t.id ? 'var(--electric)' : undefined }}
               >
                 {t.label}
               </button>
@@ -85,8 +85,8 @@ export default function CTA() {
               fontFamily: 'var(--font)',
               fontSize: 15,
               lineHeight: 1.6,
-              resize: 'vertical' as any,
-            }
+              resize: 'vertical',
+            }}
           />
           <div className="card" style={{ marginTop: 16, background: 'var(--ink)', whiteSpace: 'pre-wrap', fontSize: 14, color: 'var(--text-dim)', minHeight: 80 }}>
             {message || 'Текст сообщения появится здесь'}

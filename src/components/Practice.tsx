@@ -30,7 +30,7 @@ export default function Practice() {
                 key={n.id}
                 className="step-btn"
                 onClick={() => setActive(active === i ? null : i)}
-                style={{ borderColor: active === i ? 'var(--teal)' : undefined, display: 'block', width: '100%', textAlign: 'left', marginBottom: 8 }
+                style={{ borderColor: active === i ? 'var(--teal)' : undefined, display: 'block', width: '100%', textAlign: 'left', marginBottom: 8 }}
               >
                 <span className="mono" style={{ color: 'var(--teal)' }}>{String(i + 1).padStart(2, '0')} </span>{n.label}
                 {active === i && <div style={{ marginTop: 8, color: 'var(--text-dim)', fontSize: 13 }}>{n.role}</div>}
