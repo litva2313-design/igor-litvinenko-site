@@ -50,7 +50,7 @@ export default function Situations() {
             style={{
               textAlign: 'left', cursor: 'pointer', borderColor: active === i ? sit.accent : undefined,
               background: active === i ? `color-mix(in srgb, ${sit.accent} 12%, var(--glass))` : undefined,
-            }
+            }}
           >
             <div style={{ fontSize: 24, marginBottom: 12, color: sit.accent }}>{sit.icon}</div>
             <h3 style={{ fontSize: 20 }}>{sit.label}</h3>

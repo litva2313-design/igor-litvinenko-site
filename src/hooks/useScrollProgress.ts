@@ -1,14 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 export function useScrollProgress() {
-  const ref = useRef(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     let ticking = false;
     const update = () => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      ref.current = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      setProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
       ticking = false;
     };
     const onScroll = () => {
@@ -22,5 +22,5 @@ export function useScrollProgress() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  return ref.current;
+  return progress;
 }
