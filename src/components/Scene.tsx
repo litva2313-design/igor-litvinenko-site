@@ -1,133 +1,154 @@
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, MeshDistortMaterial, Environment, Trail, Sparkles } from '@react-three/drei';
+import { Float, Environment, Trail, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
+
+function Node({ ordered, scatter, order, colorType, index }: any) {
+  const ref = useRef<THREE.Mesh>(null!);
+  const matRef = useRef<any>(null);
+
+  useFrame(() => {
+    if (!ref.current) return;
+    const o = THREE.MathUtils.smoothstep(0, 1, order);
+    const x = THREE.MathUtils.lerp(scatter[0], ordered[0], o);
+    const y = THREE.MathUtils.lerp(scatter[1], ordered[1], o);
+    const z = THREE.MathUtils.lerp(scatter[2], ordered[2], o);
+    ref.current.position.set(x, y, z);
+    ref.current.rotation.y += 0.005 * (1 - o);
+  });
+
+  const isMetal = colorType === 0;
+  const isGlass = colorType === 1;
+  const isPolymer = colorType === 2;
+
+  return (
+    <mesh ref={ref}>
+      {isMetal && <boxGeometry args={[0.28, 0.28, 0.28]} />}
+      {isGlass && <sphereGeometry args={[0.18, 32, 32]} />}
+      {isPolymer && <cylinderGeometry args={[0.12, 0.16, 0.32, 16]} />}
+      <meshPhysicalMaterial
+        ref={matRef}
+        color={isMetal ? '#d4d4d8' : isGlass ? '#a5b4fc' : '#2dd4bf'}
+        metalness={isMetal ? 1 : isGlass ? 0.1 : 0.2}
+        roughness={isMetal ? 0.15 : isGlass ? 0.05 : 0.35}
+        transmission={isGlass ? 0.95 : 0}
+        thickness={isGlass ? 0.4 : 0}
+        ior={isGlass ? 1.5 : 1.4}
+        clearcoat={isPolymer ? 0.8 : isMetal ? 0.3 : 0.1}
+        clearcoatRoughness={0.1}
+        emissive={isGlass ? '#4f46e5' : '#000000'}
+        emissiveIntensity={isGlass ? 0.15 : 0}
+        envMapIntensity={1.2}
+      />
+    </mesh>
+  );
+}
 
 function Core({ progress, sceneState, paused }: any) {
   const group = useRef<THREE.Group>(null!);
   const ring = useRef<THREE.Mesh>(null!);
-  const nodes = useRef<THREE.Group>(null!);
-  const pulse = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>>(null!);
+  const pulse = useRef<THREE.Mesh>(null!);
 
   const stateMap: Record<string, number> = {
-    hero: 0, chapter1: 0.2, chapter2: 0.45, chapter3: 0.7, situations: 0.8, practice: 0.9, cta: 1,
+    hero: 0, chapter1: 0.25, chapter2: 0.5, chapter3: 0.7, situations: 0.82, practice: 0.92, cta: 1,
   };
-  const target = stateMap[sceneState] ?? 0;
+  const target = stateMap[sceneState] ?? progress;
 
-  useFrame((state) => {
-    if (paused) return;
-    const t = state.clock.getElapsedTime();
-    if (group.current) {
-      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, t * 0.08 + progress * 2, 0.05);
-      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, Math.sin(t * 0.1) * 0.1, 0.05);
-    }
-    if (ring.current) {
-      ring.current.rotation.z = t * 0.15;
-      const s = 1 + Math.sin(t * 2) * 0.03;
-      ring.current.scale.setScalar(s);
-    }
-    if (nodes.current) {
-      nodes.current.rotation.y = -t * 0.05;
-      const spread = THREE.MathUtils.lerp(0.6, 2.2, target);
-      nodes.current.scale.setScalar(spread);
-    }
-    if (pulse.current) {
-      const p = (Math.sin(t * 3) + 1) / 2;
-      pulse.current.material.opacity = 0.3 + p * 0.5;
-      pulse.current.scale.setScalar(1 + p * 0.4);
-    }
-    // camera drift
-    const camZ = THREE.MathUtils.lerp(8, 5.5, target);
-    const camY = THREE.MathUtils.lerp(1, 0.2, target);
-    state.camera.position.lerp(new THREE.Vector3(0, camY, camZ), 0.03);
-    state.camera.lookAt(0, 0, 0);
-  });
-
-  const nodePositions = useMemo(() => {
+  const ordered = useMemo(() => {
     const pts: [number, number, number][] = [];
-    for (let i = 0; i < 7; i++) {
-      const a = (i / 7) * Math.PI * 2;
-      pts.push([Math.cos(a) * 1.4, Math.sin(a * 1.3) * 0.8, Math.sin(a) * 1.4]);
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2;
+      const r = i % 3 === 0 ? 1.6 : 2.1;
+      pts.push([Math.cos(a) * r, Math.sin(a * 0.7) * 0.6, Math.sin(a) * r]);
     }
     return pts;
   }, []);
 
+  const scattered = useMemo(() => ordered.map(p => [
+    p[0] + (Math.random() - 0.5) * 5,
+    p[1] + (Math.random() - 0.5) * 3.5,
+    p[2] + (Math.random() - 0.5) * 5,
+  ] as [number, number, number]), [ordered]);
+
+  useFrame((state) => {
+    if (paused) return;
+    const t = state.clock.getElapsedTime();
+    const order = THREE.MathUtils.smoothstep(0, 1, target);
+
+    if (group.current) {
+      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, t * 0.06 + progress * 1.5, 0.04);
+      group.current.rotation.x = Math.sin(t * 0.08) * 0.08 * (1 - order * 0.5);
+    }
+    if (ring.current) {
+      ring.current.rotation.z = t * 0.12;
+      ring.current.scale.setScalar(1 + Math.sin(t * 1.8) * 0.02);
+    }
+    if (pulse.current) {
+      const p = (Math.sin(t * 2.5) + 1) / 2;
+      (pulse.current.material as any).opacity = 0.25 + p * 0.4;
+      pulse.current.scale.setScalar(1 + p * 0.3);
+    }
+
+    const camZ = THREE.MathUtils.lerp(9, 6.2, order);
+    const camY = THREE.MathUtils.lerp(0.8, 0.1, order);
+    state.camera.position.lerp(new THREE.Vector3(0, camY, camZ), 0.025);
+    state.camera.lookAt(0, 0, 0);
+  });
+
   return (
     <group ref={group}>
-      <Trail width={0.8} length={6} color={'#4f7cff'} attenuation={(w) => w * w}>
-        <mesh ref={pulse} position={[0, 0, 0]}>
-          <sphereGeometry args={[0.35, 32, 32]} />
-          <meshBasicMaterial color={'#ff6b4a'} transparent opacity={0.5} />
+      <Trail width={0.6} length={5} color={'#818cf8'} attenuation={(w) => w * w}>
+        <mesh ref={pulse}>
+          <sphereGeometry args={[0.32, 32, 32]} />
+          <meshPhysicalMaterial color={'#ff7a5c'} transparent opacity={0.6} transmission={0.3} roughness={0.1} metalness={0.4} />
         </mesh>
       </Trail>
 
-      <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.6}>
+      <Float speed={1.2} rotationIntensity={0.2} floatIntensity={0.4}>
         <mesh>
-          <icosahedronGeometry args={[1.1, 1]} />
-          <MeshDistortMaterial
-            color={'#1b1b4e'}
-            emissive={'#4f7cff'}
-            emissiveIntensity={0.6}
-            roughness={0.15}
-            metalness={0.8}
-            distort={0.35}
-            speed={1.2}
-            transparent
-            opacity={0.85}
+          <icosahedronGeometry args={[1.05, 1]} />
+          <meshPhysicalMaterial
+            color={'#1e1b4b'}
+            metalness={0.15}
+            roughness={0.08}
+            transmission={0.85}
+            thickness={0.6}
+            ior={1.45}
+            clearcoat={0.4}
+            emissive={'#4f46e5'}
+            emissiveIntensity={0.25}
+            envMapIntensity={1.4}
           />
         </mesh>
       </Float>
 
       <mesh ref={ring} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.9, 0.04, 16, 100]} />
-        <meshStandardMaterial color={'#8b5cf6'} emissive={'#8b5cf6'} emissiveIntensity={1.2} />
+        <torusGeometry args={[1.85, 0.035, 16, 100]} />
+        <meshPhysicalMaterial color={'#a78bfa'} metalness={1} roughness={0.12} clearcoat={0.6} envMapIntensity={1.5} />
       </mesh>
 
-      <mesh rotation={[0, 0, Math.PI / 4]}>
-        <torusGeometry args={[2.6, 0.025, 16, 120]} />
-        <meshStandardMaterial color={'#2dd4bf'} emissive={'#2dd4bf'} emissiveIntensity={0.8} transparent opacity={0.6} />
+      <mesh rotation={[0.3, 0, Math.PI / 5]}>
+        <torusGeometry args={[2.55, 0.018, 12, 80]} />
+        <meshPhysicalMaterial color={'#2dd4bf'} metalness={0.9} roughness={0.2} transparent opacity={0.7} />
       </mesh>
 
-      <group ref={nodes}>
-        {nodePositions.map((p, i) => (
-          <group key={i} position={p as any}>
-            <mesh>
-              <boxGeometry args={[0.22, 0.22, 0.22]} />
-              <meshStandardMaterial
-                color={i % 3 === 0 ? '#ff9f43' : i % 3 === 1 ? '#4f7cff' : '#2dd4bf'}
-                emissive={i % 3 === 0 ? '#ff9f43' : i % 3 === 1 ? '#4f7cff' : '#2dd4bf'}
-                emissiveIntensity={0.7}
-                metalness={0.9}
-                roughness={0.2}
-              />
-            </mesh>
-            <mesh>
-              <sphereGeometry args={[0.08, 16, 16]} />
-              <meshBasicMaterial color={'#ffffff'} />
-            </mesh>
-          </group>
-        ))}
-      </group>
+      {ordered.map((ord, i) => (
+        <Node
+          key={i}
+          ordered={ord}
+          scatter={scattered[i]}
+          order={target}
+          colorType={i % 3}
+          index={i}
+        />
+      ))}
 
-      {nodePositions.map((p, i) =>
-        nodePositions.slice(i + 1, i + 3).map((q, j) => {
-          const mid = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, (p[2] + q[2]) / 2];
-          const len = Math.sqrt((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2);
-          const dir = new THREE.Vector3(q[0] - p[0], q[1] - p[1], q[2] - p[2]).normalize();
-          return (
-            <mesh key={i + '-' + j} position={mid as any} quaternion={new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir)}>
-              <cylinderGeometry args={[0.012, 0.012, len, 8]} />
-              <meshBasicMaterial color={'#4f7cff'} transparent opacity={0.35} />
-            </mesh>
-          );
-        })
-      )}
-
-      <Sparkles count={60} scale={8} size={2} speed={0.4} color={'#8b5cf6'} opacity={0.5} />
-      <Environment preset={'night'} />
-      <ambientLight intensity={0.3} />
-      <pointLight position={[4, 4, 4]} intensity={1.5} color={'#4f7cff'} />
-      <pointLight position={[-4, -2, 2]} intensity={0.8} color={'#ff6b4a'} />
+      <Sparkles count={40} scale={9} size={1.8} speed={0.3} color={'#c4b5fd'} opacity={0.4} />
+      <Environment preset={'city'} />
+      <ambientLight intensity={0.25} />
+      <pointLight position={[5, 3, 4]} intensity={1.8} color={'#a5b4fc'} />
+      <pointLight position={[-3, -1, 3]} intensity={0.9} color={'#ff7a5c'} />
+      <directionalLight position={[0, 4, 2]} intensity={0.6} />
     </group>
   );
 }
@@ -151,9 +172,9 @@ export default function Scene({ progress, sceneState, paused, reducedMotion }: a
     <Canvas
       className="scene"
       style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, alpha: true }}
-      camera={{ position: [0, 1, 8], fov: 50 }}
+      dpr={[1, 1.6]}
+      gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
+      camera={{ position: [0, 0.8, 9], fov: 48 }}
     >
       <Core progress={progress} sceneState={sceneState} paused={paused} />
     </Canvas>
